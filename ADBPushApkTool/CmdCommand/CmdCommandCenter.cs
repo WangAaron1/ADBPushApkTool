@@ -124,6 +124,7 @@ namespace ADBPushApkTool
             adb.BeginErrorReadLine();
             if (isPush)
             {
+                ApkPush_Tool.apkPush_Tool.CmdInfoWin.Text = "请稍等,正在推送...";
                 adb.WaitForExit();
                 adb.CancelOutputRead();
                 adb.CancelErrorRead();
@@ -227,7 +228,7 @@ namespace ADBPushApkTool
         public static void CheckDeviceItemInfo()
         {
             if (devices.Count != 0 ) devices.Clear();
-            var state = DoSimpleCommand("adb.exe", "devices -l",5000,false);
+            var state = DoSimpleCommand("adb.exe", "devices -l",-1,false);
             //if (needSimulator)
             //{
             //    var simulator = DoSimpleCommand("adb.exe", "connect 127.0.0.1:7555", 5000,false);

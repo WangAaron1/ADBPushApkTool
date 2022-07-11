@@ -9,16 +9,17 @@ namespace ADBPushApkTool
 {
     public partial class ApkPush_Tool : Form
     {
-        private string noBundle = "未检测到头为sunborn的包体";
-        private string noDevice = "未检测到设备";
+        protected string noBundle = "未检测到头为sunborn的包体";
+        protected string noDevice = "未检测到设备";
+        protected Thread back_Refresh;
+        protected ThreadStart back_RefreshStart;
+        protected MatchCollection names;
+        protected bool needCheck = true;
+        protected bool inSimulator = false;
         public static ApkPush_Tool apkPush_Tool;
-        private Thread back_Refresh;
-        private ThreadStart back_RefreshStart;
-        public Dictionary<string, string> devices = new Dictionary<string, string>();
         public List<string> devicesID = new List<string>();
-        private MatchCollection names;
-        private bool needCheck = true;
-        private bool inSimulator = false;
+        public Dictionary<string, string> devices = new Dictionary<string, string>();
+
         public ApkPush_Tool()
         {
             InitializeComponent();
@@ -61,11 +62,9 @@ namespace ADBPushApkTool
         /// </summary>
         private void ChooseFileButton_Click(object sender, EventArgs e)
         {
-            needCheck = !needCheck;
             if (selectApk.ShowDialog() == DialogResult.OK)
             {
                 CmdInfoWin.Text = CmdCommandCenter.DoSimpleCommand("adb.exe", $"-s {devicesID[Devices.SelectedIndex]} install {selectApk.FileName}",-1,true);
-                needCheck = !needCheck;
             }
         }
 
@@ -92,18 +91,20 @@ namespace ADBPushApkTool
         private void ReadOnlyPathPushButton_Click(object sender, EventArgs e)
         {
             TarFileCommand();
-            CmdInfoWin.Text = CmdCommandCenter.DoSimpleCommand("adb.exe", $"-s {devicesID[Devices.SelectedIndex]} push {selectRAR.FileName.Replace(selectRAR.SafeFileName,"")}bundles/ /sdcard/Android/data/{BundleNames.SelectedItem}/files/",-1,true);
+            var filePath = selectRAR.FileName.Replace(selectRAR.SafeFileName, "");
+            var bundlePath = filePath + "bundles\\.";
+            var mediaPath = filePath + "media\\.";
+            CmdInfoWin.Text = CmdCommandCenter.DoSimpleCommand("adb.exe", $"-s {devicesID[Devices.SelectedIndex]} push {bundlePath} /sdcard/Android/data/{BundleNames.SelectedItem}/files/bundles",-1,true);
+            CmdInfoWin.Text = CmdCommandCenter.DoSimpleCommand("adb.exe", $"-s {devicesID[Devices.SelectedIndex]} push {mediaPath} /sdcard/Android/data/{BundleNames.SelectedItem}/files/media",-1,true);
         }
         /// <summary>
         /// Push的具体执行方法
         /// </summary>
         private void PushVoid()
         {
-            needCheck = !needCheck;
             if (folderBrowserDialog1.ShowDialog() == DialogResult.OK)
             {
-                CmdInfoWin.Text =  CmdCommandCenter.DoSimpleCommand("adb.exe", $"-s {devicesID[Devices.SelectedIndex]} push {folderBrowserDialog1.SelectedPath} /sdcard/Android/data/{BundleNames.SelectedItem}/files/",-1,true);
-                needCheck = !needCheck;
+                CmdInfoWin.Text =  CmdCommandCenter.DoSimpleCommand("adb.exe", $"-s {devicesID[Devices.SelectedIndex]} push {folderBrowserDialog1.SelectedPath} /sdcard/Android/data/{BundleNames.SelectedItem}/files",-1,true);
             }
         }
 
@@ -135,7 +136,7 @@ namespace ADBPushApkTool
         /// 时钟时间刷新设备信息
         /// todo = > 用协程
         /// </summary>
-        private void RefreshDevices()
+        protected void RefreshDevices()
         {
             //label2.Text = CmdCommandCenter.CheckDeviceItemInfo();
             CmdCommandCenter.CheckDeviceItemInfo();
@@ -146,7 +147,7 @@ namespace ADBPushApkTool
         /// <summary>
         /// 用于显示下拉框中目前选中的设备
         /// </summary>
-        private void SetSelectedDevice()
+        protected void SetSelectedDevice()
         {
             if (CmdCommandCenter.devices.Count != Devices.Items.Count)
             {
@@ -188,7 +189,10 @@ namespace ADBPushApkTool
             //    Devices.SelectedItem = noDevice;
             //}
         }
-        private void GetBundleNames()
+        /// <summary>
+        /// 用于设置BundleCombox下拉框的可选包体选项
+        /// </summary>
+        protected void GetBundleNames()
         {
             names = Commands.GetPackagesNameList();
             if (names == null)
@@ -229,6 +233,7 @@ namespace ADBPushApkTool
         private void Devices_SelectedIndexChanged(object sender, EventArgs e)
         {
             BundleNames.Items.Clear();
+            BundleNames.Text = noBundle;
         }
 
 
@@ -240,6 +245,7 @@ namespace ADBPushApkTool
         {
             BundleNames.SelectedItem = noBundle;
             Devices.SelectedItem = noDevice;
+            SimulatorsCheckPoint.SelectedIndex = 0;
         }
 
         private void CmdInfoWin_TextChanged(object sender, EventArgs e)
