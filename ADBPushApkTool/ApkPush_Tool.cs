@@ -16,7 +16,6 @@ namespace ADBPushApkTool
         protected MatchCollection names;
         protected bool needCheck = true;
         protected bool inSimulator = false;
-        public static ApkPush_Tool apkPush_Tool;
         public List<string> devicesID = new List<string>();
         public Dictionary<string, string> devices = new Dictionary<string, string>();
 
@@ -27,7 +26,7 @@ namespace ADBPushApkTool
             //图个方便 ，把跨线程检测关了
             Control.CheckForIllegalCrossThreadCalls = false;
             InitThread();
-            apkPush_Tool = this;
+            ApkPush_ToolHelpers.apkPush_Tool = this;
             back_Refresh.Start();
             Application.ApplicationExit += (sender,e) => { KillAllProcess(); };
         }
@@ -50,18 +49,17 @@ namespace ADBPushApkTool
             back_Refresh = new Thread(back_RefreshStart);
             back_Refresh.IsBackground = true;
         }
-        /// <summary>
-        /// 用于获取主窗实例
-        /// </summary>
-        public static ApkPush_Tool GetFormInfo()
-        {
-            return apkPush_Tool;
-        }
+
         /// <summary>
         /// Install按钮被按下
         /// </summary>
         private void ChooseFileButton_Click(object sender, EventArgs e)
         {
+            if (devicesID.Count == 0)
+            {
+                MessageBox.Show("请先连接设备", "确认");
+                return;
+            }
             if (selectApk.ShowDialog() == DialogResult.OK)
             {
                 CmdInfoWin.Text = CmdCommandCenter.DoSimpleCommand("adb.exe", $"-s {devicesID[Devices.SelectedIndex]} install {selectApk.FileName}",-1,true);
@@ -69,11 +67,33 @@ namespace ADBPushApkTool
         }
 
         /// <summary>
-        /// 选择分包解压按钮
+        /// 究极一键式安装流程
         /// </summary>
         private void TarCommandAndPush_Click(object sender, EventArgs e)
         {
-            TarFileCommand();
+            if (devicesID.Count == 0)
+            {
+                MessageBox.Show("请先连接设备", "确认");
+                return;
+            }
+            if (BundleNames.SelectedItem == null)
+            {
+                MessageBox.Show("选择包体", "确认");
+                return;
+            }
+            if (selectApk.ShowDialog() == DialogResult.OK)
+            {
+                CmdInfoWin.Text = CmdCommandCenter.DoSimpleCommand("adb.exe", $"-s {devicesID[Devices.SelectedIndex]} install {selectApk.FileName}", -1, true);
+                var path = selectApk.FileName.Replace(selectApk.SafeFileName, "");
+                var command = $"tar -zxvf {string.Concat(selectApk.SafeFileName, "_extraRes.zip")}";
+                CmdInfoWin.Text = CmdCommandCenter.DoSimpleCommand("cmd.exe", $"cd /d {path}", command, 3000, false);
+                var bundlePath = string.Concat(path, "bundles\\.");
+                var mediaPath = string.Concat(path, "media\\.");
+                var pushFile = Regex.Match(selectApk.SafeFileName, @"com\.sunborn\..*\..*?(?=_)");
+                CmdInfoWin.Text = CmdCommandCenter.DoSimpleCommand("adb.exe", $"-s {devicesID[Devices.SelectedIndex]} push {bundlePath} /sdcard/Android/data/{pushFile}/files/bundles", -1, true);
+                CmdInfoWin.Text = CmdCommandCenter.DoSimpleCommand("adb.exe", $"-s {devicesID[Devices.SelectedIndex]} push {mediaPath} /sdcard/Android/data/{pushFile}/files/media", -1, true);
+            }
+            
         }
 
         /// <summary>
@@ -81,6 +101,16 @@ namespace ADBPushApkTool
         /// </summary>
         private void pushButton_Click(object sender, EventArgs e)
         {
+            if (devicesID.Count == 0)
+            {
+                MessageBox.Show("请先连接设备", "确认");
+                return;
+            }
+            if (BundleNames.SelectedItem == null)
+            {
+                MessageBox.Show("选择包体", "确认");
+                return;
+            }
             PushVoid();
         }
         /// <summary>
@@ -90,12 +120,29 @@ namespace ADBPushApkTool
         /// <param name="e"></param>
         private void ReadOnlyPathPushButton_Click(object sender, EventArgs e)
         {
-            TarFileCommand();
-            var filePath = selectRAR.FileName.Replace(selectRAR.SafeFileName, "");
-            var bundlePath = filePath + "bundles\\.";
-            var mediaPath = filePath + "media\\.";
-            CmdInfoWin.Text = CmdCommandCenter.DoSimpleCommand("adb.exe", $"-s {devicesID[Devices.SelectedIndex]} push {bundlePath} /sdcard/Android/data/{BundleNames.SelectedItem}/files/bundles",-1,true);
-            CmdInfoWin.Text = CmdCommandCenter.DoSimpleCommand("adb.exe", $"-s {devicesID[Devices.SelectedIndex]} push {mediaPath} /sdcard/Android/data/{BundleNames.SelectedItem}/files/media",-1,true);
+            if (devicesID.Count == 0)
+            {
+                MessageBox.Show("请先连接设备", "确认");
+                return;
+            }
+            if (BundleNames.SelectedItem == null)
+            {
+                MessageBox.Show("选择包体", "确认");
+                return;
+            }
+            if (selectRAR.ShowDialog() == DialogResult.OK)
+            {
+                //解压指定文件
+                TarTargetFile(selectRAR);
+                folderBrowserDialog1.SelectedPath = selectRAR.FileName.Replace(selectRAR.SafeFileName, "");
+                var filePath = selectRAR.FileName.Replace(selectRAR.SafeFileName, "");
+                var bundlePath = string.Concat(filePath, "bundles\\.");
+                var mediaPath = string.Concat(filePath, "media\\.");
+                if (BundleNames.SelectedItem == null)
+                    return;
+                CmdInfoWin.Text = CmdCommandCenter.DoSimpleCommand("adb.exe", $"-s {devicesID[Devices.SelectedIndex]} push {bundlePath} /sdcard/Android/data/{BundleNames.SelectedItem}/files/bundles", -1, true);
+                CmdInfoWin.Text = CmdCommandCenter.DoSimpleCommand("adb.exe", $"-s {devicesID[Devices.SelectedIndex]} push {mediaPath} /sdcard/Android/data/{BundleNames.SelectedItem}/files/media", -1, true);
+            }
         }
         /// <summary>
         /// Push的具体执行方法
@@ -112,7 +159,7 @@ namespace ADBPushApkTool
         {
             if (selectRAR.ShowDialog() == DialogResult.OK)
             {
-                if (selectRAR.SafeFileName.Contains(" "))
+                if (selectRAR.SafeFileName.Contains(' '))
                 {
                     MessageBox.Show("选择的压缩包中不可带有空格!");
                     return;
@@ -133,8 +180,7 @@ namespace ADBPushApkTool
             CmdInfoWin.Text = CmdCommandCenter.DoSimpleCommand("cmd.exe", $"cd /d {path}", command,3000,false);
         }
         /// <summary>
-        /// 时钟时间刷新设备信息
-        /// todo = > 用协程
+        /// 用协程刷新设备信息
         /// </summary>
         protected void RefreshDevices()
         {
@@ -164,7 +210,7 @@ namespace ADBPushApkTool
             }
             foreach (var item in devices)
             {
-                var comboName = item.Key + $"({item.Value})";
+                var comboName = string.Concat(item.Key,$"({item.Value})");
                 if (Devices.Items.Contains(comboName))
                 {
                     continue;
@@ -267,7 +313,7 @@ namespace ADBPushApkTool
                 devicesID.Add(item.Key);
             }
         }
-        public void KillAllProcess()
+        public static void KillAllProcess()
         {
             Process[] pro = Process.GetProcesses();//获取已开启的所有进程
 

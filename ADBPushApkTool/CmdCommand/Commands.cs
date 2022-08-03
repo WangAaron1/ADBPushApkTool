@@ -13,7 +13,7 @@ namespace ADBPushApkTool
 
         static Commands()
         {
-            mainForm = ApkPush_Tool.GetFormInfo();
+            mainForm = ApkPush_ToolHelpers.GetFormInfo();
         }
         /// <summary>
         /// 获取Devices的List
@@ -22,7 +22,7 @@ namespace ADBPushApkTool
         public static MatchCollection GetPackagesNameList()
         {
             var deviceName = Regex.Replace(mainForm.Devices.SelectedItem.ToString(), @"\(.*\)", "");
-            var log = CmdCommandCenter.DoSimpleCommand("cmd.exe",$"adb -s {deviceName} shell","pm list packages -3",2000,false);
+            var log = CmdCommandCenter.DoSimpleCommand("adb.exe",$"-s {deviceName} shell pm list packages -3",6000,false);
             var packNames = Regex.Matches(log, @"com\.sunborn.*(?=\r)");
             return packNames;
         }

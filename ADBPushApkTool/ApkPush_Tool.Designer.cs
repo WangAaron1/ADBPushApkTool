@@ -29,7 +29,6 @@ namespace ADBPushApkTool
         /// </summary>
         private void InitializeComponent()
         {
-            this.components = new System.ComponentModel.Container();
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(ApkPush_Tool));
             this.selectApk = new System.Windows.Forms.OpenFileDialog();
             this.label2 = new System.Windows.Forms.Label();
@@ -40,7 +39,6 @@ namespace ADBPushApkTool
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.pushButton = new System.Windows.Forms.Button();
             this.selectRAR = new System.Windows.Forms.OpenFileDialog();
-            this.CheckDevices = new System.Windows.Forms.Timer(this.components);
             this.ReadOnlyPathPushButton = new System.Windows.Forms.Button();
             this.CmdInfoWin = new System.Windows.Forms.TextBox();
             this.BundleNames = new System.Windows.Forms.ComboBox();
@@ -99,11 +97,11 @@ namespace ADBPushApkTool
             // 
             // TarCommandAndPush
             // 
-            this.TarCommandAndPush.Location = new System.Drawing.Point(12, 152);
+            this.TarCommandAndPush.Location = new System.Drawing.Point(12, 220);
             this.TarCommandAndPush.Name = "TarCommandAndPush";
             this.TarCommandAndPush.Size = new System.Drawing.Size(208, 27);
             this.TarCommandAndPush.TabIndex = 7;
-            this.TarCommandAndPush.Text = "选择分包解压";
+            this.TarCommandAndPush.Text = "Install+解压+Push";
             this.TarCommandAndPush.UseVisualStyleBackColor = true;
             this.TarCommandAndPush.Click += new System.EventHandler(this.TarCommandAndPush_Click);
             // 
@@ -122,13 +120,9 @@ namespace ADBPushApkTool
             this.selectRAR.FileName = "selectRAR";
             this.selectRAR.Filter = "*.rar,*.zip|";
             // 
-            // CheckDevices
-            // 
-            this.CheckDevices.Interval = 1000;
-            // 
             // ReadOnlyPathPushButton
             // 
-            this.ReadOnlyPathPushButton.Location = new System.Drawing.Point(12, 217);
+            this.ReadOnlyPathPushButton.Location = new System.Drawing.Point(12, 152);
             this.ReadOnlyPathPushButton.Name = "ReadOnlyPathPushButton";
             this.ReadOnlyPathPushButton.Size = new System.Drawing.Size(208, 27);
             this.ReadOnlyPathPushButton.TabIndex = 9;
@@ -248,7 +242,6 @@ namespace ADBPushApkTool
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
         private System.Windows.Forms.Button pushButton;
         private System.Windows.Forms.OpenFileDialog selectRAR;
-        private System.Windows.Forms.Timer CheckDevices;
         public System.Windows.Forms.Button ReadOnlyPathPushButton;
         public System.Windows.Forms.TextBox CmdInfoWin;
         private System.Windows.Forms.ComboBox BundleNames;

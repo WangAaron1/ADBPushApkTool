@@ -95,7 +95,7 @@ namespace ADBPushApkTool
                     processOutputBuilder.AppendLine(eventArgs.Data);
                     if (isPush)
                     {
-                        ApkPush_Tool.apkPush_Tool.CmdInfoWin.Text = eventArgs.Data;
+                        ApkPush_ToolHelpers.apkPush_Tool.CmdInfoWin.Text = eventArgs.Data;
                     }
                 }
                 else
@@ -124,19 +124,19 @@ namespace ADBPushApkTool
             adb.BeginErrorReadLine();
             if (isPush)
             {
-                ApkPush_Tool.apkPush_Tool.CmdInfoWin.Text = "请稍等,正在推送...";
+                ApkPush_ToolHelpers.apkPush_Tool.CmdInfoWin.Text = "请稍等,正在推送...";
                 adb.WaitForExit();
                 adb.CancelOutputRead();
                 adb.CancelErrorRead();
-                adb.Kill();
                 adb.Close();
+                adb.Dispose();
             }
-            else if (adb.WaitForExit(exitTime) && outputWaitHandle.WaitOne(exitTime) && errorWaitHandle.WaitOne(exitTime))
+            else if (adb.WaitForExit(exitTime) || outputWaitHandle.WaitOne(exitTime) || errorWaitHandle.WaitOne(exitTime))
             {
                 adb.CancelOutputRead();
                 adb.CancelErrorRead();
-                adb.Kill();
                 adb.Close();
+                adb.Dispose();
             }
             return processOutputBuilder.ToString();
         }
@@ -166,7 +166,7 @@ namespace ADBPushApkTool
                     processOutputBuilder.AppendLine(eventArgs.Data);
                     if (isPush)
                     {
-                        ApkPush_Tool.apkPush_Tool.CmdInfoWin.Text = eventArgs.Data;
+                        ApkPush_ToolHelpers.apkPush_Tool.CmdInfoWin.Text = eventArgs.Data;
                     }
                 }
                 else
@@ -208,18 +208,18 @@ namespace ADBPushApkTool
                 adb.WaitForExit();
                 adb.CancelOutputRead();
                 adb.CancelErrorRead();
-                adb.Kill();
                 adb.Close();
+                adb.Dispose();
             }
-            else if (adb.WaitForExit(exitTime) && outputWaitHandle.WaitOne(exitTime) && errorWaitHandle.WaitOne(exitTime))
+            else if (adb.WaitForExit(exitTime) || outputWaitHandle.WaitOne(exitTime) || errorWaitHandle.WaitOne(exitTime))
             {
                 adb.CancelOutputRead();
                 adb.CancelErrorRead();
-                adb.Kill();
                 adb.Close();
+                adb.Dispose();
             }
-
             return processOutputBuilder.ToString();
+
         }
 
         /// <summary>
